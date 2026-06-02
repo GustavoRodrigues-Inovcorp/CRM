@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * Tokens de design do CRM Pro
+ * Usa variáveis CSS para suportar dark/light mode via classe .dark no <html>
+ */
+@layer base {
+
+    /* ── Light Mode ── */
+    :root {
+        --background:           0 0% 98%;
+        --foreground:           240 10% 10%;
+        --card:                 0 0% 100%;
+        --card-foreground:      240 10% 10%;
+        --border:               240 6% 88%;
+        --input:                240 6% 88%;
+        --primary:              214 88% 54%;
+        --primary-foreground:   0 0% 100%;
+        --secondary:            240 5% 94%;
+        --secondary-foreground: 240 5% 35%;
+        --muted:                240 5% 94%;
+        --muted-foreground:     240 4% 52%;
+        --accent:               240 5% 91%;
+        --accent-foreground:    240 10% 15%;
+        --ring:                 214 88% 54%;
+        --radius:               0.5rem;
+
+        /* Sidebar ligeiramente mais escura que o conteúdo em light mode */
+        --sidebar: 240 8% 95%;
+    }
+
+    /* ── Dark Mode ── */
+    .dark {
+        --background:           240 10% 7%;
+        --foreground:           0 0% 93%;
+        --card:                 240 10% 10%;
+        --card-foreground:      0 0% 93%;
+        --border:               240 8% 15%;
+        --input:                240 8% 15%;
+        --primary:              214 88% 60%;
+        --primary-foreground:   0 0% 100%;
+        --secondary:            240 8% 13%;
+        --secondary-foreground: 0 0% 70%;
+        --muted:                240 8% 13%;
+        --muted-foreground:     0 0% 45%;
+        --accent:               240 8% 14%;
+        --accent-foreground:    0 0% 90%;
+        --ring:                 214 88% 60%;
+
+        /* Sidebar igual ao background em dark mode */
+        --sidebar: 240 10% 7%;
+    }
+}
+
+@layer base {
+    * { @apply border-border; }
+    body { @apply bg-background text-foreground antialiased; }
+}
+
+/* ── Scrollbar global ── */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(53, 124, 245, 0.25) transparent;
+}
+::-webkit-scrollbar       { width: 4px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  {
+    background: rgba(53, 124, 245, 0.25);
+    border-radius: 4px;
+}
+
+/* ── Focus ring global ── */
+*:focus-visible {
+    outline: 2px solid rgba(53, 124, 245, 0.5);
+    outline-offset: 2px;
+}
+
+/* ── Radius consistente em badges e botões ── */
+.rounded-md { border-radius: 8px; }
