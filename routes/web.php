@@ -24,9 +24,7 @@ Route::get('/', function (Request $request) {
 });
 
 Route::middleware([Authenticate::class, EnsureEmailIsVerified::class])->group(function () {
-    Route::get('/dashboard', function () {
-        return Inertia::render('Dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 
     /* Módulo Entidades/Empresas */
     Route::get('/entities', [App\Http\Controllers\EntityController::class, 'index'])->name('entities.index');
@@ -54,6 +52,9 @@ Route::middleware([Authenticate::class, EnsureEmailIsVerified::class])->group(fu
     Route::post('/deals/{deal}/proposals', [App\Http\Controllers\DealController::class, 'uploadProposal'])->name('deals.proposals.upload');
     Route::post('/deals/{deal}/proposals/{proposal}/send', [App\Http\Controllers\DealController::class, 'sendProposal'])->name('deals.proposals.send');
 
+    /* Cancelar follow-up automático */
+    Route::patch('/deals/{deal}/followup/cancel', [App\Http\Controllers\DealController::class, 'cancelFollowUp'])->name('deals.followup.cancel');
+
     /* Módulo Calendário */
     Route::get('/calendar', [App\Http\Controllers\CalendarEventController::class, 'index'])->name('calendar.index');
     Route::post('/calendar', [App\Http\Controllers\CalendarEventController::class, 'store'])->name('calendar.store');
@@ -74,9 +75,21 @@ Route::middleware([Authenticate::class, EnsureEmailIsVerified::class])->group(fu
     Route::post('/deals/{deal}/products', [App\Http\Controllers\DealController::class, 'addProduct'])->name('deals.addProduct');
     Route::delete('/deals/{deal}/products/{product}', [App\Http\Controllers\DealController::class, 'removeProduct'])->name('deals.removeProduct');
 
-    Route::get('/automations', fn() => Inertia::render('automations/Index'))->name('automations.index');
-    Route::get('/lead-forms', fn() => Inertia::render('lead-forms/Index'))->name('lead-forms.index');
-    
+    /* Automações */
+    Route::get('/automations', [App\Http\Controllers\AutomationController::class, 'index'])->name('automations.index');
+    Route::post('/automations', [App\Http\Controllers\AutomationController::class, 'store'])->name('automations.store');
+    Route::put('/automations/{automationRule}', [App\Http\Controllers\AutomationController::class, 'update'])->name('automations.update');
+    Route::delete('/automations/{automationRule}', [App\Http\Controllers\AutomationController::class, 'destroy'])->name('automations.destroy');
+    Route::patch('/automations/{automationRule}/toggle', [App\Http\Controllers\AutomationController::class, 'toggle'])->name('automations.toggle');
+    Route::post('/automations/{automationRule}/run', [App\Http\Controllers\AutomationController::class, 'run'])->name('automations.run');
+
+    /* Formulários públicos */
+    Route::get('/lead-forms', [App\Http\Controllers\LeadFormController::class, 'index'])->name('lead-forms.index');
+    Route::post('/lead-forms', [App\Http\Controllers\LeadFormController::class, 'store'])->name('lead-forms.store');
+    Route::put('/lead-forms/{leadForm}', [App\Http\Controllers\LeadFormController::class, 'update'])->name('lead-forms.update');
+    Route::delete('/lead-forms/{leadForm}', [App\Http\Controllers\LeadFormController::class, 'destroy'])->name('lead-forms.destroy');
+    Route::get('/lead-forms/{leadForm}/submissions', [App\Http\Controllers\LeadFormController::class, 'submissions'])->name('lead-forms.submissions');
+
     /* AI Chat */
     Route::get('/chat', [App\Http\Controllers\AiChatController::class, 'index'])->name('chat.index');
     Route::post('/chat/send', [App\Http\Controllers\AiChatController::class, 'send'])->name('chat.send');
@@ -96,5 +109,9 @@ Route::middleware([Authenticate::class, EnsureEmailIsVerified::class])->group(fu
     Route::post('/profile/2fa/enable', [App\Http\Controllers\ProfileController::class, 'enableTwoFactor'])->name('profile.2fa.enable');
     Route::post('/profile/2fa/disable', [App\Http\Controllers\ProfileController::class, 'disableTwoFactor'])->name('profile.2fa.disable');
 });
+
+/* Formulário público — sem autenticação */
+Route::get('/f/{slug}', [App\Http\Controllers\LeadFormController::class, 'show'])->name('lead-forms.public');
+Route::post('/f/{slug}', [App\Http\Controllers\LeadFormController::class, 'submit'])->name('lead-forms.submit');
 
 require __DIR__.'/auth.php';

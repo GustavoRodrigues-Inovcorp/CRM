@@ -164,7 +164,7 @@ function renderMarkdown(text) {
                     v-if="messages.length > 0"
                     variant="ghost"
                     size="sm"
-                    class="text-muted-foreground gap-1.5"
+                    class="text-muted-foreground gap-1.5 rounded-lg"
                     @click="clearHistory"
                 >
                     <Trash2 class="w-3.5 h-3.5" />

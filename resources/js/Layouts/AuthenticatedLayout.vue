@@ -117,7 +117,7 @@ const isActive = (routeName) => route().current(routeName)
             </nav>
 
             <!-- Divisor visual -->
-            <div class="mx-3 my-1 border-t border-border/60" />
+            <div class="mx-3 mt-4 mb-3 border-t border-border/60" />
 
             <!-- Secção: Ferramentas -->
             <nav class="px-2 pb-1">
@@ -150,11 +150,11 @@ const isActive = (routeName) => route().current(routeName)
             </nav>
 
             <!-- Fundo da sidebar: Definições + Perfil do utilizador -->
-            <div class="mt-auto px-2 py-3 border-t border-border">
+            <div class="mt-auto px-2 py-2 border-t border-border">
                 <!-- Link para definições -->
                 <Link
                     :href="route('settings.index')"
-                    class="flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-muted-foreground hover:bg-white/[0.04] hover:text-foreground transition-all mb-1 text-[13px]"
+                    class="flex items-center gap-2.5 px-2.5 py-[9.3px] rounded-lg text-muted-foreground hover:bg-white/[0.04] hover:text-foreground transition-all mb-1 text-[13px]"
                 >
                     <Settings class="w-[15px] h-[15px]" />
                     Definições

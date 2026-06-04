@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Deal extends Model
 {
@@ -50,5 +51,10 @@ class Deal extends Model
     public function proposals(): HasMany
     {
         return $this->hasMany(DealProposal::class)->latest();
+    }
+
+    public function followUp(): HasOne
+    {
+        return $this->hasOne(DealFollowUp::class)->latest();
     }
 }

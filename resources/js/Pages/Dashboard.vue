@@ -1,60 +1,116 @@
 <script setup>
 /**
  * Dashboard.vue
- * Página principal após login.
- * Mostra KPIs, pipeline resumido e atividade recente.
- * Os dados virão do backend via props quando os módulos estiverem completos.
+ * Página principal — KPIs reais, pipeline, atividade recente e próximos eventos.
  */
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import { Head, Link } from '@inertiajs/vue3'
+import { computed } from 'vue'
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card'
-import { TrendingUp, TrendingDown, Briefcase, Building2, Users, Activity } from 'lucide-vue-next'
+import { Badge } from '@/Components/ui/badge'
+import {
+    TrendingUp, TrendingDown, Briefcase,
+    Building2, Activity, Phone, Users,
+    Mail, CheckCircle2, FileText, Calendar,
+    MapPin, Clock,
+} from 'lucide-vue-next'
 
-/* ─── KPIs estáticos — serão dinâmicos quando o backend estiver pronto ─── */
-const kpis = [
+/* ─── Props vindas do DashboardController ─── */
+const props = defineProps({
+    stats:          Object,
+    dealsByStage:   Array,
+    recentDeals:    Array,
+    recentActivity: Array,
+    upcomingEvents: Array,
+})
+
+/* ─── Configuração dos estágios ─── */
+const stageConfig = {
+    lead:        { label: 'Lead',        color: '#6366f1' },
+    proposal:    { label: 'Proposta',    color: '#f59e0b' },
+    negotiation: { label: 'Negociação',  color: '#8b5cf6' },
+    follow_up:   { label: 'Follow Up',   color: '#3b82f6' },
+    won:         { label: 'Ganho',       color: '#10b981' },
+    lost:        { label: 'Perdido',     color: '#ef4444' },
+}
+
+/* ─── Ícones por tipo de atividade ─── */
+const activityIcons = {
+    call:    Phone,
+    meeting: Users,
+    email:   Mail,
+    task:    CheckCircle2,
+    note:    FileText,
+}
+
+const activityColors = {
+    call:    'bg-emerald-500/10 text-emerald-500',
+    meeting: 'bg-blue-500/10 text-blue-500',
+    email:   'bg-amber-500/10 text-amber-500',
+    task:    'bg-violet-500/10 text-violet-500',
+    note:    'bg-gray-500/10 text-gray-400',
+}
+
+/* ─── Formata valor em euros ─── */
+function formatEuro(v) {
+    return new Intl.NumberFormat('pt-PT', {
+        style: 'currency', currency: 'EUR', maximumFractionDigits: 0,
+    }).format(v || 0)
+}
+
+/* ─── Formata data relativa ─── */
+function formatRelative(d) {
+    const diff = Math.floor((Date.now() - new Date(d)) / 60000)
+    if (diff < 60)  return `há ${diff}min`
+    if (diff < 1440) return `há ${Math.floor(diff / 60)}h`
+    return `há ${Math.floor(diff / 1440)}d`
+}
+
+function formatEventDate(d) {
+    return new Date(d).toLocaleDateString('pt-PT', {
+        weekday: 'short', day: '2-digit',
+        month: 'short', hour: '2-digit', minute: '2-digit',
+    })
+}
+
+/* ─── KPIs com dados reais ─── */
+const kpis = computed(() => [
     {
-        label: 'Pipeline Total',
-        value: '€0',
-        change: '+0%',
-        up: true,
-        icon: Briefcase,
-        accent: 'text-blue-400',
-        bg: 'bg-blue-500/10',
+        label:  'Pipeline Total',
+        value:  formatEuro(props.stats.pipeline),
+        icon:   Briefcase,
+        accent: 'text-primary',
+        bg:     'bg-primary/10',
     },
     {
-        label: 'Negócios Ganhos',
-        value: '0',
-        change: '+0%',
-        up: true,
-        icon: TrendingUp,
+        label:  'Negócios Ganhos',
+        value:  props.stats.wonThisMonth,
+        sub:    'este mês',
+        icon:   TrendingUp,
         accent: 'text-emerald-400',
-        bg: 'bg-emerald-500/10',
+        bg:     'bg-emerald-500/10',
     },
     {
-        label: 'Taxa de Conversão',
-        value: '0%',
-        change: '+0%',
-        up: true,
-        icon: Activity,
+        label:  'Taxa de Conversão',
+        value:  props.stats.convRate + '%',
+        icon:   Activity,
         accent: 'text-amber-400',
-        bg: 'bg-amber-500/10',
+        bg:     'bg-amber-500/10',
     },
     {
-        label: 'Novas Entidades',
-        value: '0',
-        change: '+0',
-        up: true,
-        icon: Building2,
+        label:  'Novas Entidades',
+        value:  props.stats.newEntities,
+        sub:    'este mês',
+        icon:   Building2,
         accent: 'text-blue-400',
-        bg: 'bg-blue-500/10',
+        bg:     'bg-blue-500/10',
     },
-]
+])
 </script>
 
 <template>
     <Head title="Dashboard" />
 
-    <!-- Sem botão "Novo" no dashboard — não contextual aqui -->
     <AuthenticatedLayout>
         <template #title>Dashboard</template>
 
@@ -62,62 +118,101 @@ const kpis = [
 
             <!-- ── KPIs ── -->
             <div class="grid grid-cols-2 xl:grid-cols-4 gap-4">
-                <Card
-                    v-for="kpi in kpis"
-                    :key="kpi.label"
-                    class="border-border bg-card"
-                >
+                <Card v-for="kpi in kpis" :key="kpi.label" class="border-border bg-card">
                     <CardHeader class="flex flex-row items-center justify-between pb-2 space-y-0">
                         <CardTitle class="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
                             {{ kpi.label }}
                         </CardTitle>
-                        <!-- Ícone colorido por categoria -->
                         <div :class="['w-7 h-7 rounded-lg flex items-center justify-center', kpi.bg]">
                             <component :is="kpi.icon" :class="['w-3.5 h-3.5', kpi.accent]" />
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <p class="text-2xl font-bold text-foreground tracking-tight leading-none mb-1.5">
+                        <p class="text-2xl font-bold text-foreground tracking-tight leading-none mb-1">
                             {{ kpi.value }}
                         </p>
-                        <!-- Indicador de tendência -->
-                        <div class="flex items-center gap-1">
-                            <TrendingUp v-if="kpi.up"   class="w-3 h-3 text-emerald-400" />
-                            <TrendingDown v-else         class="w-3 h-3 text-red-400" />
-                            <span class="text-[11px]" :class="kpi.up ? 'text-emerald-400' : 'text-red-400'">
-                                {{ kpi.change }} este mês
-                            </span>
-                        </div>
+                        <p v-if="kpi.sub" class="text-[11px] text-muted-foreground">{{ kpi.sub }}</p>
                     </CardContent>
                 </Card>
             </div>
 
-            <!-- ── Painéis inferiores ── -->
+            <!-- ── Linha do meio: Pipeline + Atividade ── -->
             <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
 
-                <!-- Pipeline resumido -->
+                <!-- Pipeline por estágio -->
                 <Card class="xl:col-span-2 border-border bg-card">
                     <CardHeader class="flex flex-row items-center justify-between pb-3">
                         <CardTitle class="text-sm font-semibold">Pipeline de Negócios</CardTitle>
-                        <Link
-                            :href="route('deals.index')"
-                            class="text-[11px] text-primary hover:text-primary/80 transition-colors"
-                        >
+                        <Link :href="route('deals.index')" class="text-[11px] text-primary hover:underline">
                             Ver tudo →
                         </Link>
                     </CardHeader>
                     <CardContent>
-                        <!-- Placeholder até o módulo Negócios estar completo -->
-                        <div class="flex items-center justify-center py-12 rounded-lg border border-dashed border-border">
-                            <div class="text-center">
-                                <Briefcase class="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
-                                <p class="text-[12px] text-muted-foreground">Nenhum negócio ainda</p>
-                                <Link
-                                    :href="route('deals.index')"
-                                    class="text-[11px] text-primary hover:underline mt-1 inline-block"
+
+                        <!-- Estado vazio -->
+                        <div v-if="recentDeals.length === 0" class="flex flex-col items-center justify-center py-10 gap-2">
+                            <Briefcase class="w-8 h-8 text-muted-foreground/20" />
+                            <p class="text-xs text-muted-foreground">Sem negócios ainda</p>
+                            <Link :href="route('deals.index')" class="text-xs text-primary hover:underline">
+                                Criar primeiro negócio →
+                            </Link>
+                        </div>
+
+                        <!-- Lista de negócios recentes -->
+                        <div v-else class="space-y-2">
+                            <Link
+                                v-for="deal in recentDeals"
+                                :key="deal.id"
+                                :href="route('deals.show', deal.id)"
+                                class="flex items-center justify-between p-3 rounded-lg hover:bg-accent/50 transition-colors group"
+                            >
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <div
+                                        class="w-2 h-2 rounded-full flex-shrink-0"
+                                        :style="{ background: stageConfig[deal.stage]?.color ?? '#6b7280' }"
+                                    />
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
+                                            {{ deal.title }}
+                                        </p>
+                                        <p v-if="deal.entity" class="text-xs text-muted-foreground truncate">
+                                            {{ deal.entity.name }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3 flex-shrink-0 ml-3">
+                                    <span
+                                        class="text-[10px] font-medium px-2 py-0.5 rounded-full"
+                                        :style="{
+                                            background: (stageConfig[deal.stage]?.color ?? '#6b7280') + '20',
+                                            color: stageConfig[deal.stage]?.color ?? '#6b7280',
+                                        }"
+                                    >
+                                        {{ stageConfig[deal.stage]?.label ?? deal.stage }}
+                                    </span>
+                                    <span class="text-sm font-semibold text-foreground">
+                                        {{ formatEuro(deal.value) }}
+                                    </span>
+                                </div>
+                            </Link>
+                        </div>
+
+                        <!-- Resumo por estágio -->
+                        <div v-if="dealsByStage.length > 0" class="mt-4 pt-4 border-t border-border">
+                            <div class="flex gap-3 flex-wrap">
+                                <div
+                                    v-for="stage in dealsByStage"
+                                    :key="stage.stage"
+                                    class="flex items-center gap-1.5"
                                 >
-                                    Criar primeiro negócio →
-                                </Link>
+                                    <div
+                                        class="w-2 h-2 rounded-full"
+                                        :style="{ background: stageConfig[stage.stage]?.color ?? '#6b7280' }"
+                                    />
+                                    <span class="text-xs text-muted-foreground">
+                                        {{ stageConfig[stage.stage]?.label }} ({{ stage.count }})
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </CardContent>
@@ -129,16 +224,75 @@ const kpis = [
                         <CardTitle class="text-sm font-semibold">Atividade Recente</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <!-- Placeholder até o módulo de atividades estar completo -->
-                        <div class="flex items-center justify-center py-8 rounded-lg border border-dashed border-border">
-                            <div class="text-center">
-                                <Activity class="w-6 h-6 text-muted-foreground/30 mx-auto mb-2" />
-                                <p class="text-[11px] text-muted-foreground">Sem atividade recente</p>
+                        <div v-if="recentActivity.length === 0" class="flex flex-col items-center justify-center py-8 gap-2">
+                            <Activity class="w-6 h-6 text-muted-foreground/20" />
+                            <p class="text-xs text-muted-foreground">Sem atividade recente</p>
+                        </div>
+                        <div v-else class="space-y-3">
+                            <div
+                                v-for="item in recentActivity"
+                                :key="item.id"
+                                class="flex items-start gap-2.5"
+                            >
+                                <div
+                                    class="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
+                                    :class="activityColors[item.type] ?? 'bg-muted text-muted-foreground'"
+                                >
+                                    <component :is="activityIcons[item.type] ?? Activity" class="w-3 h-3" />
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-xs font-medium text-foreground truncate" :class="item.completed ? 'line-through text-muted-foreground' : ''">
+                                        {{ item.title }}
+                                    </p>
+                                    <p class="text-[10px] text-muted-foreground truncate">
+                                        {{ item.deal?.title }}
+                                    </p>
+                                </div>
+                                <span class="text-[10px] text-muted-foreground/60 whitespace-nowrap flex-shrink-0">
+                                    {{ formatRelative(item.created_at) }}
+                                </span>
                             </div>
                         </div>
                     </CardContent>
                 </Card>
             </div>
+
+            <!-- ── Próximos eventos ── -->
+            <Card v-if="upcomingEvents.length > 0" class="border-border bg-card">
+                <CardHeader class="flex flex-row items-center justify-between pb-3">
+                    <CardTitle class="text-sm font-semibold flex items-center gap-2">
+                        <Calendar class="w-4 h-4 text-primary" />
+                        Próximos Eventos
+                    </CardTitle>
+                    <Link :href="route('calendar.index')" class="text-[11px] text-primary hover:underline">
+                        Ver calendário →
+                    </Link>
+                </CardHeader>
+                <CardContent>
+                    <div class="grid grid-cols-1 xl:grid-cols-3 gap-3">
+                        <div
+                            v-for="event in upcomingEvents"
+                            :key="event.id"
+                            class="flex items-start gap-3 p-3 rounded-lg border border-border hover:bg-accent/30 transition-colors"
+                        >
+                            <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                <Calendar class="w-3.5 h-3.5 text-primary" />
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-sm font-medium text-foreground truncate">{{ event.title }}</p>
+                                <div class="flex items-center gap-1.5 mt-0.5">
+                                    <Clock class="w-3 h-3 text-muted-foreground/50" />
+                                    <span class="text-[10px] text-muted-foreground">{{ formatEventDate(event.start_at) }}</span>
+                                </div>
+                                <div v-if="event.location" class="flex items-center gap-1.5 mt-0.5">
+                                    <MapPin class="w-3 h-3 text-muted-foreground/50" />
+                                    <span class="text-[10px] text-muted-foreground truncate">{{ event.location }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
 
         </div>
     </AuthenticatedLayout>

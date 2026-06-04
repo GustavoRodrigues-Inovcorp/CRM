@@ -30,6 +30,7 @@ const props = defineProps({
     people:   Array,
     products: Array,
     stages:   Object,
+    followUp: Object,
 })
 
 /* ─── Ícones por tipo de atividade ─── */
@@ -159,6 +160,12 @@ function formatDate(d) {
         day: '2-digit', month: 'short', year: 'numeric',
         hour: '2-digit', minute: '2-digit',
     })
+}
+
+function cancelFollowUp() {
+    if (confirm('Cancelar o follow-up automático?')) {
+        router.patch(route('deals.followup.cancel', props.deal.id))
+    }
 }
 
 const stageColor = computed(() => props.stages[props.deal.stage]?.color ?? '#6b7280')
@@ -323,6 +330,61 @@ const stageLabel = computed(() => props.stages[props.deal.stage]?.label ?? props
                         </label>
                     </CardContent>
                 </Card>
+
+                <!-- Follow-up automático -->
+                <Card v-if="followUp || deal.stage === 'follow_up'">
+                    <CardHeader class="pb-3">
+                        <CardTitle class="text-sm font-semibold flex items-center gap-2">
+                            <Mail class="w-4 h-4 text-primary" />
+                            Follow-up Automático
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <!-- Ativo -->
+                        <div v-if="followUp && followUp.active" class="space-y-3">
+                            <div class="flex items-center gap-2">
+                                <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                <span class="text-xs text-emerald-500 font-medium">Ativo</span>
+                            </div>
+                            <div class="space-y-1.5 text-xs text-muted-foreground">
+                                <div class="flex justify-between">
+                                    <span>Emails enviados</span>
+                                    <span class="font-medium text-foreground">{{ followUp.emails_sent }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Próximo envio</span>
+                                    <span class="font-medium text-foreground">
+                                        {{ followUp.next_send_at ? new Date(followUp.next_send_at).toLocaleDateString('pt-PT') : '—' }}
+                                    </span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Destinatário</span>
+                                    <span class="font-medium text-foreground truncate ml-2">{{ followUp.email }}</span>
+                                </div>
+                            </div>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                class="w-full text-xs text-destructive rounded-lg border-destructive/30 hover:bg-destructive/10"
+                                @click="cancelFollowUp"
+                            >
+                                Cancelar follow-up
+                            </Button>
+                        </div>
+
+                        <!-- Inativo ou cancelado -->
+                        <div v-else-if="followUp && !followUp.active" class="text-center py-3">
+                            <p class="text-xs text-muted-foreground">Follow-up cancelado</p>
+                            <p class="text-[10px] text-muted-foreground/60">{{ followUp.emails_sent }} email(s) enviado(s)</p>
+                        </div>
+
+                        <!-- Sem email configurado -->
+                        <div v-else class="text-center py-3">
+                            <p class="text-xs text-muted-foreground">Sem email de contacto</p>
+                            <p class="text-[10px] text-muted-foreground/60">Associa uma pessoa ou empresa com email</p>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
 
             <!-- ══ COLUNA DIREITA — Cronologia + Atividades ══ -->
@@ -463,7 +525,7 @@ const stageLabel = computed(() => props.stages[props.deal.stage]?.label ?? props
             </div>
         </div>
 
-        <!-- ══ MODAL — Enviar Proposta ══ -->
+        <!-- MODAL — Enviar Proposta -->
         <Dialog v-model:open="showSendModal">
             <DialogContent class="max-w-lg">
                 <DialogHeader>

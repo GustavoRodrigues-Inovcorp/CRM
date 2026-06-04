@@ -90,13 +90,37 @@ class DealController extends Controller
     /* Atualiza apenas o estágio — chamado pelo drag-and-drop */
     public function updateStage(Request $request, Deal $deal)
     {
-        // abort_if($deal->user_id !== auth()->id(), 403);
-
         $request->validate([
             'stage' => 'required|in:lead,proposal,negotiation,follow_up,won,lost',
         ]);
 
+        $oldStage = $deal->stage;
         $deal->update(['stage' => $request->stage]);
+
+        /* ─── Inicia follow-up automático quando entra em Follow Up ─── */
+        if ($request->stage === 'follow_up' && $oldStage !== 'follow_up') {
+            $email = $deal->person?->email ?? $deal->entity?->email;
+
+            if ($email) {
+                $followUp = \App\Models\DealFollowUp::create([
+                    'deal_id'      => $deal->id,
+                    'user_id'      => $deal->user_id,
+                    'email'        => $email,
+                    'active'       => true,
+                    'emails_sent'  => 0,
+                    'next_send_at' => now()->addMinutes(1),
+                ]);
+
+                /* Dispara primeiro email em 1 hora */
+                \App\Jobs\SendFollowUpEmail::dispatch($followUp)
+                    ->delay(now()->addMinutes(1));
+            }
+        }
+
+        /* ─── Para follow-up se sair do estado Follow Up ─── */
+        if ($oldStage === 'follow_up' && $request->stage !== 'follow_up') {
+            $deal->followUp?->update(['active' => false]);
+        }
 
         return response()->json(['success' => true]);
     }
@@ -162,6 +186,7 @@ class DealController extends Controller
             'products',
             'activities.user',
             'proposals.user',
+            'followUp',
         ]);
 
         /* Cronologia unificada — atividades + propostas ordenadas por data */
@@ -202,6 +227,7 @@ class DealController extends Controller
             'people'   => $people,
             'products' => $products,
             'stages'   => self::STAGES,
+            'followUp' => $deal->followUp,
         ]);
     }
 
@@ -266,24 +292,16 @@ class DealController extends Controller
             'body'    => 'required|string',
         ]);
 
-        /* Envia o email com o ficheiro em anexo */
-        \Mail::send([], [], function ($message) use ($request, $proposal) {
-            $message
-                ->to($request->email)
-                ->subject($request->subject)
-                ->setBody($request->body, 'text/html')
-                ->attach(storage_path('app/public/' . $proposal->file_path), [
-                    'as'   => $proposal->file_name,
-                    'mime' => 'application/pdf',
-                ]);
-        });
+        /* ─── Envia via Resend ─── */
+        \Mail::to($request->email)
+            ->send(new \App\Mail\ProposalMail($deal, $proposal, $request->body));
 
         $proposal->update([
             'sent_at'       => now(),
             'sent_to_email' => $request->email,
         ]);
 
-        /* Regista na cronologia como atividade */
+        /* ─── Regista na cronologia ─── */
         $deal->activities()->create([
             'user_id'     => auth()->id(),
             'type'        => 'email',
@@ -293,5 +311,12 @@ class DealController extends Controller
         ]);
 
         return back()->with('success', 'Proposta enviada com sucesso.');
+    }
+
+    public function cancelFollowUp(Deal $deal)
+    {
+        abort_if($deal->user_id !== auth()->id(), 403);
+        $deal->followUp?->update(['active' => false, 'cancelled_at' => now()]);
+        return back()->with('success', 'Follow-up cancelado.');
     }
 }
