@@ -103,13 +103,14 @@ function openCreate(date = '') {
 
 function openEdit(event) {
     editingEvent.value = event
-    form.title       = event.title
-    form.description = event.extendedProps.description ?? ''
-    form.type        = event.extendedProps.type ?? 'task'
-    form.location    = event.extendedProps.location ?? ''
-    form.completed   = event.extendedProps.completed ?? false
+    form.title          = event.title
+    form.description    = event.extendedProps.description ?? ''
+    form.type           = event.extendedProps.type ?? 'task'
+    form.location       = event.extendedProps.location ?? ''
+    form.completed      = event.extendedProps.completed ?? false
+    form.eventable_type = event.extendedProps.eventable_type ?? null
+    form.eventable_id   = event.extendedProps.eventable_id ?? null
 
-    /* ─── Usa as datas do objeto diretamente sem conversão de fuso ─── */
     const start = event.start
     const end   = event.end
 
@@ -251,14 +252,12 @@ function destroy() {
                     </div>
 
                     <!-- Associar a entidade/pessoa/negócio -->
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="space-y-1.5">
-                            <Label>
-                                <Link class="w-3.5 h-3.5 inline mr-1" />
-                                Ligar a
-                            </Label>
+                    <div class="space-y-2">
+                        <Label>Ligar a</Label>
+                        <div class="grid grid-cols-2 gap-3">
                             <select
                                 v-model="form.eventable_type"
+                                @change="form.eventable_id = null"
                                 class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                             >
                                 <option :value="null">Nenhum</option>
@@ -266,9 +265,7 @@ function destroy() {
                                 <option value="person">Pessoa</option>
                                 <option value="deal">Negócio</option>
                             </select>
-                        </div>
-                        <div class="space-y-1.5">
-                            <Label>&nbsp;</Label>
+
                             <select
                                 v-if="form.eventable_type === 'entity'"
                                 v-model="form.eventable_id"
@@ -294,6 +291,18 @@ function destroy() {
                                 <option v-for="d in deals" :key="d.id" :value="d.id">{{ d.title }}</option>
                             </select>
                             <div v-else class="h-9" />
+                        </div>
+
+                        <!-- Mostra associação atual quando edita -->
+                        <div
+                            v-if="editingEvent && editingEvent.extendedProps.eventable_name"
+                            class="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/20 text-xs text-primary"
+                        >
+                            <component
+                                :is="Link"
+                                class="w-3.5 h-3.5 flex-shrink-0"
+                            />
+                            Associado a: <strong>{{ editingEvent.extendedProps.eventable_name }}</strong>
                         </div>
                     </div>
 

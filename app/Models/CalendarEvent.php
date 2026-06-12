@@ -10,8 +10,8 @@ class CalendarEvent extends Model
 {
     protected $fillable = [
         'user_id', 'title', 'description', 'type',
-        'start_at', 'end_at', 'location', 'completed',
-        'color', 'eventable_type', 'eventable_id',
+        'start_at', 'end_at', 'location', 'color',
+        'completed', 'eventable_type', 'eventable_id',
     ];
 
     protected $casts = [
@@ -20,15 +20,14 @@ class CalendarEvent extends Model
         'completed' => 'boolean',
     ];
 
-    /* Relação polimórfica — Entity, Person ou Deal */
-    public function eventable(): MorphTo
-    {
-        return $this->morphTo();
-    }
-
-    /* Utilizador dono do evento */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /* ─── Relação polimórfica — Liga a Entity, Person ou Deal ─── */
+    public function eventable(): MorphTo
+    {
+        return $this->morphTo();
     }
 }

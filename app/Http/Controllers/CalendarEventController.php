@@ -14,28 +14,33 @@ class CalendarEventController extends Controller
     public function index()
     {
         $events = CalendarEvent::where('user_id', auth()->id())
+            ->with('eventable')
             ->get()
             ->map(fn($e) => [
                 'id'    => $e->id,
                 'title' => $e->title,
-                /* ─── Retorna datas como string sem conversão de timezone ─── */
                 'start' => $e->start_at->format('Y-m-d\TH:i:s'),
                 'end'   => $e->end_at?->format('Y-m-d\TH:i:s'),
                 'color' => $e->color ?? $this->typeColor($e->type),
                 'extendedProps' => [
-                    'type'        => $e->type,
-                    'description' => $e->description,
-                    'location'    => $e->location,
-                    'completed'   => $e->completed,
+                    'type'           => $e->type,
+                    'description'    => $e->description,
+                    'location'       => $e->location,
+                    'completed'      => $e->completed,
+                    'eventable_type' => match($e->eventable_type) {
+                        Entity::class => 'entity',
+                        Person::class => 'person',
+                        Deal::class   => 'deal',
+                        default       => null,
+                    },
+                    'eventable_id'   => $e->eventable_id,
+                    'eventable_name' => $e->eventable?->name ?? $e->eventable?->title ?? null,
                 ],
             ]);
 
-        $entities = Entity::where('user_id', auth()->id())
-            ->orderBy('name')->get(['id', 'name']);
-        $people = Person::where('user_id', auth()->id())
-            ->orderBy('name')->get(['id', 'name']);
-        $deals = Deal::where('user_id', auth()->id())
-            ->orderBy('title')->get(['id', 'title']);
+        $entities = Entity::where('user_id', auth()->id())->orderBy('name')->get(['id', 'name']);
+        $people   = Person::where('user_id', auth()->id())->orderBy('name')->get(['id', 'name']);
+        $deals    = Deal::where('user_id', auth()->id())->orderBy('title')->get(['id', 'title']);
 
         return Inertia::render('Calendar/Index', [
             'events'   => $events,

@@ -122,15 +122,25 @@ async function onDealAdded(evt, targetStage) {
     const id = parseInt(evt.item?.dataset?.id)
     if (!id) return
 
-    /* Bloqueia o watch para não reverter o drag */
     blockWatch.value = true
 
-    /* Atualiza o objeto localmente */
+    /* Encontra o deal em todas as colunas originais */
+    let movedDeal = null
     for (const col of columns.value) {
-        const deal = col.deals.find(d => d.id === id)
-        if (deal) {
-            deal.stage = targetStage
+        const idx = col.deals.findIndex(d => d.id === id)
+        if (idx !== -1) {
+            movedDeal = col.deals[idx]
+            col.deals.splice(idx, 1)
             break
+        }
+    }
+
+    /* Adiciona na coluna destino */
+    if (movedDeal) {
+        movedDeal.stage = targetStage
+        const targetCol = columns.value.find(c => c.key === targetStage)
+        if (targetCol && !targetCol.deals.find(d => d.id === id)) {
+            targetCol.deals.push(movedDeal)
         }
     }
 
@@ -143,7 +153,6 @@ async function onDealAdded(evt, targetStage) {
         console.error('Erro:', e.response?.data)
         columns.value = buildColumns()
     } finally {
-        /* Desbloqueia o watch após o servidor responder */
         setTimeout(() => { blockWatch.value = false }, 500)
     }
 }
@@ -249,7 +258,8 @@ function probabilityColor(p) {
 
                     <!-- Área de cards + drag-and-drop -->
                     <VueDraggable
-                        v-model="column.deals"
+                        :modelValue="columns.find(c => c.key === column.key)?.deals ?? []"
+                        @update:modelValue="val => { const c = columns.find(c => c.key === column.key); if(c) c.deals = val }"
                         group="deals"
                         animation="200"
                         ghost-class="opacity-30"
