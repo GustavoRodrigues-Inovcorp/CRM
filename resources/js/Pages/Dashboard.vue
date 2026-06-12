@@ -12,7 +12,8 @@ import {
     TrendingUp, TrendingDown, Briefcase,
     Building2, Activity, Phone, Users,
     Mail, CheckCircle2, FileText, Calendar,
-    MapPin, Clock,
+    MapPin, Clock, Sparkles, AlertTriangle,
+    Info, ArrowRight,
 } from 'lucide-vue-next'
 
 /* ─── Props vindas do DashboardController ─── */
@@ -22,6 +23,7 @@ const props = defineProps({
     recentDeals:    Array,
     recentActivity: Array,
     upcomingEvents: Array,
+    aiSuggestions:  Array,
 })
 
 /* ─── Configuração dos estágios ─── */
@@ -256,6 +258,76 @@ const kpis = computed(() => [
                     </CardContent>
                 </Card>
             </div>
+
+            <!-- ── Agente Comercial AI ── -->
+            <Card v-if="aiSuggestions?.length > 0" class="border-primary/20 bg-card">
+                <CardHeader class="pb-3">
+                    <div class="flex items-center justify-between">
+                        <CardTitle class="text-sm font-semibold flex items-center gap-2">
+                            <div class="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center">
+                                <Sparkles class="w-3.5 h-3.5 text-primary" />
+                            </div>
+                            Agente Comercial AI
+                            <span class="text-[10px] text-muted-foreground font-normal">
+                                — sugestões baseadas nos teus dados
+                            </span>
+                        </CardTitle>
+                        <Link :href="route('chat.index')" class="text-[11px] text-primary hover:underline flex items-center gap-1">
+                            Abrir chat
+                            <ArrowRight class="w-3 h-3" />
+                        </Link>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-3">
+                        <Link
+                            v-for="suggestion in aiSuggestions"
+                            :key="suggestion.id"
+                            :href="suggestion.link"
+                            class="flex items-start gap-3 p-3 rounded-lg border transition-all hover:shadow-sm group"
+                            :class="{
+                                'border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10': suggestion.type === 'warning',
+                                'border-blue-500/20 bg-blue-500/5 hover:bg-blue-500/10':   suggestion.type === 'info',
+                                'border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10': suggestion.type === 'success',
+                            }"
+                        >
+                            <!-- Ícone -->
+                            <div
+                                class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
+                                :class="{
+                                    'bg-amber-500/20':   suggestion.type === 'warning',
+                                    'bg-blue-500/20':    suggestion.type === 'info',
+                                    'bg-emerald-500/20': suggestion.type === 'success',
+                                }"
+                            >
+                                <AlertTriangle v-if="suggestion.type === 'warning'" class="w-4 h-4 text-amber-500" />
+                                <Info          v-else-if="suggestion.type === 'info'" class="w-4 h-4 text-blue-500" />
+                                <TrendingUp    v-else class="w-4 h-4 text-emerald-500" />
+                            </div>
+
+                            <!-- Conteúdo -->
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between gap-2 mb-0.5">
+                                    <p class="text-xs font-semibold text-foreground">{{ suggestion.title }}</p>
+                                    <span
+                                        class="text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0"
+                                        :class="{
+                                            'bg-red-500/10 text-red-500':     suggestion.priority === 'high',
+                                            'bg-amber-500/10 text-amber-500': suggestion.priority === 'medium',
+                                        }"
+                                    >
+                                        {{ suggestion.priority === 'high' ? 'URGENTE' : 'MÉDIO' }}
+                                    </span>
+                                </div>
+                                <p class="text-xs text-muted-foreground leading-relaxed">{{ suggestion.message }}</p>
+                                <span class="text-[10px] text-primary group-hover:underline mt-1 inline-block">
+                                    {{ suggestion.action }} →
+                                </span>
+                            </div>
+                        </Link>
+                    </div>
+                </CardContent>
+            </Card>
 
             <!-- ── Próximos eventos ── -->
             <Card v-if="upcomingEvents.length > 0" class="border-border bg-card">

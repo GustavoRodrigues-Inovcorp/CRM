@@ -62,6 +62,7 @@ class DealController extends Controller
 
         Deal::create([
             ...$validated,
+            'value'   => $validated['value'] ?? 0,
             'user_id' => auth()->id(),
         ]);
 
@@ -82,7 +83,10 @@ class DealController extends Controller
             'person_id'           => 'nullable|exists:people,id',
         ]);
 
-        $deal->update($validated);
+        $deal->update([
+            ...$validated,
+            'value' => $validated['value'] ?? 0,
+        ]);
 
         return back()->with('success', 'Negócio atualizado.');
     }

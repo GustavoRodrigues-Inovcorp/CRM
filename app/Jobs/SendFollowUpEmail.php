@@ -3,8 +3,8 @@
 namespace App\Jobs;
 
 use App\Mail\FollowUpMail;
-use App\Models\Deal;
 use App\Models\DealFollowUp;
+use App\Models\CrmNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -53,6 +53,14 @@ class SendFollowUpEmail implements ShouldQueue
         Mail::to($followUp->email)
             ->send(new FollowUpMail($followUp->deal, $body, $followUp->emails_sent + 1));
 
+        /* ─── Cria notificação no CRM ─── */
+        CrmNotification::notify(
+            $followUp->user_id,
+            'follow_up',
+            'Follow-up enviado automaticamente',
+            'Email #' . ($followUp->emails_sent + 1) . ' enviado para ' . $followUp->email . ' — ' . $followUp->deal->title,
+            '/deals/' . $followUp->deal_id,
+        );
         /* ─── Regista na cronologia ─── */
         $followUp->deal->activities()->create([
             'user_id'     => $followUp->user_id,

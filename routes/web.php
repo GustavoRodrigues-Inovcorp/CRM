@@ -31,12 +31,14 @@ Route::middleware([Authenticate::class, EnsureEmailIsVerified::class])->group(fu
     Route::post('/entities', [App\Http\Controllers\EntityController::class, 'store'])->name('entities.store');
     Route::put('/entities/{entity}', [App\Http\Controllers\EntityController::class, 'update'])->name('entities.update');
     Route::delete('/entities/{entity}', [App\Http\Controllers\EntityController::class, 'destroy'])->name('entities.destroy');
+    Route::get('/entities/{entity}', [App\Http\Controllers\EntityController::class, 'show'])->name('entities.show');
 
     /* Módulo Pessoas */
     Route::get('/people', [App\Http\Controllers\PersonController::class, 'index'])->name('people.index');
     Route::post('/people', [App\Http\Controllers\PersonController::class, 'store'])->name('people.store');
     Route::put('/people/{person}', [App\Http\Controllers\PersonController::class, 'update'])->name('people.update');
     Route::delete('/people/{person}', [App\Http\Controllers\PersonController::class, 'destroy'])->name('people.destroy');
+    Route::get('/people/{person}', [App\Http\Controllers\PersonController::class, 'show'])->name('people.show');
 
     /* Módulo Negócios */
     Route::get('/deals', [App\Http\Controllers\DealController::class, 'index'])->name('deals.index');
@@ -95,8 +97,13 @@ Route::middleware([Authenticate::class, EnsureEmailIsVerified::class])->group(fu
     Route::post('/chat/send', [App\Http\Controllers\AiChatController::class, 'send'])->name('chat.send');
     Route::delete('/chat/history', [App\Http\Controllers\AiChatController::class, 'clearHistory'])->name('chat.clearHistory');
 
-    Route::get('/settings', fn() => Inertia::render('settings/Index'))->name('settings.index');
+    /* Notificações */
+    Route::get('/notifications', [App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+    Route::patch('/notifications/{notification}/read', [App\Http\Controllers\NotificationController::class, 'markRead'])->name('notifications.read');
+    Route::patch('/notifications/read-all', [App\Http\Controllers\NotificationController::class, 'markAllRead'])->name('notifications.readAll');
 
+    Route::get('/settings', [App\Http\Controllers\SettingsController::class, 'index'])->name('settings.index');
+    
     /* Perfil do utilizador */
     Route::get('/profile', [App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');

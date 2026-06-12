@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
 use PragmaRX\Google2FA\Google2FA;
+use App\Models\ActivityLog;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -36,12 +37,14 @@ class AuthenticatedSessionController extends Controller
 
         $user = $request->user();
 
+        ActivityLog::log('login', 'Iniciou sessão');
+
         if ($user?->two_factor_enabled && $user->google2fa_secret) {
             return redirect()->route('two-factor.challenge');
         }
 
         return redirect()->intended(route('dashboard', absolute: false));
-    }
+}
 
     /**
      * Display the two-factor challenge view.
@@ -93,6 +96,7 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        ActivityLog::log('logout', 'Terminou sessão');
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

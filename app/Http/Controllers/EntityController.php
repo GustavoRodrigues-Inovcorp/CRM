@@ -3,19 +3,53 @@
 namespace App\Http\Controllers;
 
 use App\Models\Entity;
+use App\Models\Person;
+use App\Models\Deal;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class EntityController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $entities = Entity::where('user_id', auth()->id())
-            ->latest()
-            ->get();
+        /* ─── Filtros de pesquisa ─── */
+        $query = Entity::where('user_id', auth()->id())
+            ->withCount(['people', 'deals']);
+
+        if ($request->search) {
+            $query->where(function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%')
+                  ->orWhere('vat', 'like', '%' . $request->search . '%')
+                  ->orWhere('email', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        if ($request->status) {
+            $query->where('status', $request->status);
+        }
+
+        $entities = $query->latest()->get();
 
         return Inertia::render('Entities/Index', [
             'entities' => $entities,
+            'filters'  => [
+                'search' => $request->search ?? '',
+                'status' => $request->status ?? '',
+            ],
+        ]);
+    }
+
+    public function show(Entity $entity)
+    {
+        abort_if($entity->user_id !== auth()->id(), 403);
+
+        $entity->load([
+            'people',
+            'deals' => fn($q) => $q->with('user:id,name')->latest(),
+        ]);
+
+        return Inertia::render('Entities/Show', [
+            'entity' => $entity,
         ]);
     }
 
@@ -30,10 +64,7 @@ class EntityController extends Controller
             'status'  => 'required|in:active,inactive,prospect',
         ]);
 
-        Entity::create([
-            ...$validated,
-            'user_id' => auth()->id(),
-        ]);
+        Entity::create([...$validated, 'user_id' => auth()->id()]);
 
         return back()->with('success', 'Entidade criada com sucesso.');
     }

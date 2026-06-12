@@ -9,22 +9,58 @@ use Inertia\Inertia;
 
 class PersonController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        /* Carrega pessoas do utilizador autenticado com a entidade associada */
-        $people = Person::where('user_id', auth()->id())
-            ->with('entity')
-            ->latest()
-            ->get();
+        $query = Person::where('user_id', auth()->id())
+            ->with('entity:id,name')
+            ->withCount('deals');
 
-        /* Passa também a lista de entidades para o dropdown do modal */
+        if ($request->search) {
+            $query->where(function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%')
+                  ->orWhere('email', 'like', '%' . $request->search . '%')
+                  ->orWhere('position', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        if ($request->status) {
+            $query->where('status', $request->status);
+        }
+
+        $people = $query->latest()->get();
+
         $entities = Entity::where('user_id', auth()->id())
-            ->orderBy('name')
-            ->get(['id', 'name']);
+            ->orderBy('name')->get(['id', 'name']);
 
         return Inertia::render('People/Index', [
             'people'   => $people,
             'entities' => $entities,
+            'filters'  => [
+                'search' => $request->search ?? '',
+                'status' => $request->status ?? '',
+            ],
+        ]);
+    }
+
+    public function show(Person $person)
+    {
+        abort_if($person->user_id !== auth()->id(), 403);
+
+        $person->load([
+            'entity',
+            'deals' => fn($q) => $q->with('user:id,name')->latest(),
+        ]);
+
+        /* ─── Eventos do calendário associados a esta pessoa ─── */
+        $events = \App\Models\CalendarEvent::where('user_id', auth()->id())
+            ->where('eventable_type', \App\Models\Person::class)
+            ->where('eventable_id', $person->id)
+            ->latest('start_at')
+            ->get(['id', 'title', 'type', 'start_at', 'completed']);
+
+        return Inertia::render('People/Show', [
+            'person' => $person,
+            'events' => $events,
         ]);
     }
 
@@ -41,17 +77,13 @@ class PersonController extends Controller
             'notes'     => 'nullable|string',
         ]);
 
-        Person::create([
-            ...$validated,
-            'user_id' => auth()->id(),
-        ]);
+        Person::create([...$validated, 'user_id' => auth()->id()]);
 
         return back()->with('success', 'Pessoa criada com sucesso.');
     }
 
     public function update(Request $request, Person $person)
     {
-        /* Garante que só o dono pode editar */
         abort_if($person->user_id !== auth()->id(), 403);
 
         $validated = $request->validate([

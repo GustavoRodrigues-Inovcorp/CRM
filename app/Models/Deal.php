@@ -7,9 +7,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use App\Traits\Loggable;
 
 class Deal extends Model
 {
+    use Loggable;
+
     protected $fillable = [
         'user_id', 'entity_id', 'person_id', 'title',
         'value', 'stage', 'probability',

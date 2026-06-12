@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AutomationRule;
 use App\Models\Deal;
 use App\Models\DealActivity;
+use App\Models\CrmNotification;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -105,6 +106,14 @@ class AutomationController extends Controller
             ]);
             $created++;
         }
+
+        CrmNotification::notify(
+            auth()->id(),
+            'automation',
+            'Automação executada: ' . $automationRule->name,
+            $created . ' atividade(s) criada(s) automaticamente',
+            '/deals'
+        );
 
         $automationRule->update(['last_run_at' => now()]);
 

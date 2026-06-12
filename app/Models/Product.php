@@ -5,9 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use App\Traits\Loggable;
 
 class Product extends Model
 {
+    use Loggable;
+
     protected $fillable = [
         'user_id', 'name', 'description', 'price', 'unit', 'active',
     ];

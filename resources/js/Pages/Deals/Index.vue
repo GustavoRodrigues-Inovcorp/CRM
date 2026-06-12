@@ -6,7 +6,7 @@
  */
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import { Head, useForm, router, Link } from '@inertiajs/vue3'
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { VueDraggable } from 'vue-draggable-plus'
 import { Button } from '@/Components/ui/button'
 import { Input } from '@/Components/ui/input'
@@ -26,6 +26,23 @@ const props = defineProps({
     stages:       Object,
     entities:     Array,
     people:       Array,
+})
+
+/* ─── Filtros do Kanban ─── */
+const filterStage  = ref('')
+const filterSearch = ref('')
+
+/* ─── Colunas filtradas ─── */
+const filteredColumns = computed(() => {
+    return columns.value.map(col => ({
+        ...col,
+        deals: col.deals.filter(deal => {
+            const matchSearch = !filterSearch.value ||
+                deal.title.toLowerCase().includes(filterSearch.value.toLowerCase()) ||
+                deal.entity?.name?.toLowerCase().includes(filterSearch.value.toLowerCase())
+            return matchSearch
+        }),
+    })).filter(col => !filterStage.value || col.key === filterStage.value)
 })
 
 /* ─── Constrói colunas a partir das props ─── */
@@ -167,19 +184,35 @@ function probabilityColor(p) {
         <!-- ── Kanban ── -->
         <div class="flex h-full min-h-0 flex-col overflow-hidden">
 
-            <!-- Barra de totais do pipeline -->
-            <div class="flex items-center gap-6 px-6 py-3 border-b border-border bg-card/50">
-                <div
-                    v-for="col in columns" :key="col.key"
-                    class="flex items-center gap-2"
-                >
-                    <div class="w-2 h-2 rounded-full" :style="{ background: col.color }" />
-                    <span class="text-xs text-muted-foreground">{{ col.label }}</span>
-                    <span class="text-xs font-semibold text-foreground">
-                        {{ formatEuro(columnTotal(col.deals)) }}
-                    </span>
+            <!-- Barra de filtros + totais -->
+            <div class="flex items-center gap-4 px-6 py-3 border-b border-border bg-card/50 flex-wrap">
+                <!-- Totais por estágio -->
+                <div class="flex items-center gap-4 flex-wrap flex-1">
+                    <div
+                        v-for="col in columns" :key="col.key"
+                        class="flex items-center gap-2 cursor-pointer"
+                        @click="filterStage = filterStage === col.key ? '' : col.key"
+                    >
+                        <div class="w-2 h-2 rounded-full" :style="{ background: col.color }" />
+                        <span class="text-xs" :class="filterStage === col.key ? 'text-foreground font-semibold' : 'text-muted-foreground'">
+                            {{ col.label }}
+                        </span>
+                        <span class="text-xs font-semibold text-foreground">{{ formatEuro(columnTotal(col.deals)) }}</span>
+                    </div>
                 </div>
-                <div class="ml-auto flex items-center gap-1.5">
+
+                <!-- Pesquisa no kanban -->
+                <div class="relative w-52">
+                    <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+                    <input
+                        v-model="filterSearch"
+                        placeholder="Filtrar negócios..."
+                        class="h-8 w-full rounded-lg border border-input bg-background pl-6 pr-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                    />
+                </div>
+
+                <!-- Total geral -->
+                <div class="flex items-center gap-1.5 ml-2">
                     <TrendingUp class="w-3.5 h-3.5 text-primary" />
                     <span class="text-xs font-semibold text-foreground">
                         Total: {{ formatEuro(columns.reduce((s, c) => s + columnTotal(c.deals), 0)) }}
@@ -190,7 +223,7 @@ function probabilityColor(p) {
             <!-- Colunas do Kanban -->
             <div class="min-h-0 flex-1 flex gap-3 overflow-x-auto overflow-y-hidden p-5">
                 <div
-                    v-for="column in columns"
+                    v-for="column in filteredColumns"
                     :key="column.key"
                     class="flex-shrink-0 w-[270px] flex flex-col"
                 >

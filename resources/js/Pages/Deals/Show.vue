@@ -314,7 +314,7 @@ const stageLabel = computed(() => props.stages[props.deal.stage]?.label ?? props
                             <Button
                                 size="sm"
                                 variant="outline"
-                                class="h-7 text-xs gap-1 flex-shrink-0 ml-2"
+                                class="h-7 text-xs gap-1 flex-shrink-0 ml-2 rounded-md"
                                 @click="openSendModal(proposal)"
                             >
                                 <Send class="w-3 h-3" />
@@ -556,7 +556,7 @@ const stageLabel = computed(() => props.stages[props.deal.stage]?.label ?? props
                 </div>
                 <DialogFooter>
                     <Button variant="outline" @click="showSendModal = false">Cancelar</Button>
-                    <Button @click="sendProposal" :disabled="sendForm.processing" class="gap-1.5">
+                    <Button @click="sendProposal" :disabled="sendForm.processing" class="gap-1.5 rounded-md">
                         <Send class="w-3.5 h-3.5" />
                         Enviar proposta
                     </Button>

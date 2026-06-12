@@ -19,6 +19,7 @@ import { Sun, Moon } from 'lucide-vue-next'
 import CommandPalette from '@/Components/CommandPalette.vue'
 import { ref } from 'vue'
 import { Package } from 'lucide-vue-next'
+import NotificationBell from '@/Components/NotificationBell.vue'
 
 /* ─── Referência ao componente de pesquisa global ─── */
 const commandPalette = ref(null)
@@ -237,9 +238,7 @@ const isActive = (routeName) => route().current(routeName)
                     </Button>
 
                     <!-- Notificações -->
-                    <Button variant="ghost" size="icon" class="w-8 h-8 text-muted-foreground hover:text-foreground">
-                        <Bell class="w-4 h-4" />
-                    </Button>
+                    <NotificationBell />
 
                     <!-- Botão de ação principal (personalizado por cada página) -->
                     <slot name="action" />

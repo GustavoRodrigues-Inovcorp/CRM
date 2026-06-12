@@ -21,6 +21,7 @@ return new class extends Migration
             $table->integer('probability')->default(0);
             $table->date('expected_close_date')->nullable();
             $table->integer('sort_order')->default(0);
+            $table->text('notes')->nullable();
             $table->timestamps();
         });
     }
