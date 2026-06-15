@@ -11,7 +11,7 @@ Sistema de gestão de relacionamento com clientes (CRM) desenvolvido como projet
 - **Drag & Drop:** Vue Draggable Plus
 - **Calendário:** FullCalendar
 - **IA:** Groq API (Llama 3.3 70B) com streaming
-- **Email:** Resend
+- **Email:** Logs
 - **2FA:** Google Authenticator (pragmarx/google2fa-laravel)
 - **Ambiente local:** Laravel Herd
 
