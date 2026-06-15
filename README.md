@@ -76,13 +76,11 @@ GROQ_API_KEY=gsk_...
 ```
 Cria uma conta gratuita em [console.groq.com](https://console.groq.com)
 
-### Resend (Emails)
+### Log (Emails)
 ```env
 MAIL_MAILER=log  # modo de desenvolvimento — emails ficam em storage/logs/laravel.log
-RESEND_API_KEY=re_...
-MAIL_FROM_ADDRESS=onboarding@resend.dev
+MAIL_FROM_ADDRESS=crm@inovcorp.pt
 ```
-Cria uma conta gratuita em [resend.com](https://resend.com)
 
 ### Queue (Follow-up automático)
 ```env
