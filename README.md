@@ -93,3 +93,25 @@ php artisan queue:work
 ```
 
 ## 📦 Estrutura do Pipeline (Kanban)
+
+Lead → Proposta → Negociação → Follow Up → Ganho/Perdido
+
+## 🗂️ Estrutura de Base de Dados
+
+- `entities` — empresas/organizações
+- `people` — contactos individuais
+- `deals` — negócios do pipeline
+- `calendar_events` — eventos do calendário (polimórfico)
+- `products` / `deal_products` — produtos e associações a negócios
+- `deal_activities` — atividades/cronologia dos negócios
+- `deal_proposals` — propostas enviadas
+- `deal_follow_ups` — ciclos de follow-up automático
+- `automation_rules` — regras de automação
+- `lead_forms` / `lead_form_submissions` — formulários públicos
+- `ai_chat_histories` — histórico de conversas com a IA
+- `crm_notifications` — notificações do sistema
+- `activity_logs` — logs de auditoria
+
+## 👤 Autor
+
+Gustavo Rodrigues — Estagiário Inovcorp
